@@ -1,6 +1,7 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { Button, Placeholder, View } from "@aws-amplify/ui-react";
 import { amplifyClient } from "@/app/amplify-utils";
+import UseCase from "./UseCase";
 
 // Types
 type Message = {
@@ -15,6 +16,7 @@ export function Chat() {
   const [inputValue, setInputValue] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUseCase, setSelectedUseCase] = useState("API Test Case");
   const messagesRef = useRef(null);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -26,17 +28,18 @@ export function Chat() {
     e.preventDefault();
     if (inputValue.trim()) {
       const message = setNewUserMessage();
-      fetchChatResponse(message);
+      fetchChatResponse(message, selectedUseCase);
     }
   };
 
-  const fetchChatResponse = async (message: Message) => {
+  const fetchChatResponse = async (message: Message, useCase: string) => {
     setInputValue("");
     setIsLoading(true);
 
     try {
       const { data, errors } = await amplifyClient.queries.chat({
         conversation: JSON.stringify([...conversation, message]),
+        useCase, 
       });
 
       if (!errors && data) {
@@ -55,14 +58,6 @@ export function Chat() {
     }
   };
 
-  useEffect(() => {
-    const lastMessage = conversation[conversation.length - 1];
-    console.log("lastMessage", lastMessage);
-    (
-      messagesRef.current as HTMLDivElement | null
-    )?.lastElementChild?.scrollIntoView();
-  }, [conversation]);
-
   const setNewUserMessage = (): Message => {
     const newUserMessage: Message = {
       role: "user",
@@ -72,13 +67,17 @@ export function Chat() {
       ...prevConversation,
       newUserMessage,
     ]);
-
     setInputValue("");
     return newUserMessage;
   };
 
   return (
     <View className="chat-container">
+      <UseCase
+        selectedUseCase={selectedUseCase}
+        onSelect={setSelectedUseCase} // Update selected use case
+      />
+
       <View className="messages" ref={messagesRef}>
         {conversation.map((msg, index) => (
           <View key={index} className={`message ${msg.role}`}>
@@ -86,10 +85,10 @@ export function Chat() {
           </View>
         ))}
       </View>
+
       {isLoading && (
         <View className="loader-container">
           <p>Thinking...</p>
-
           <Placeholder size="large" />
         </View>
       )}
