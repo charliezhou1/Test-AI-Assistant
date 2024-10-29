@@ -19,18 +19,10 @@ const INFERENCE_CONFIG = {
 const client = new BedrockRuntimeClient({ region: AWS_REGION });
 
 export const handler: Handler = async (event) => {
-  const { conversation } = event.arguments;
+  const { conversation, useCase } = event.arguments;
 
   const SYSTEM_PROMPT = `
-  To create a personalized travel planning experience, greet users warmly and inquire about their travel preferences 
-  such as destination, dates, budget, and interests. Based on their input, suggest tailored itineraries that include 
-  popular attractions, local experiences, and hidden gems, along with accommodation options across various price 
-  ranges and styles. Provide transportation recommendations, including flights and car rentals, along with estimated 
-  costs and travel times. Recommend dining experiences that align with dietary needs, and share insights on local 
-  customs, necessary travel documents, and packing essentials. Highlight the importance of travel insurance, offer 
-  real-time updates on weather and events, and allow users to save and modify their itineraries. Additionally, 
-  provide a budget tracking feature and the option to book flights and accommodations directly or through trusted 
-  platforms, all while maintaining a warm and approachable tone to enhance the excitement of trip planning.
+  To create a ${useCase} experience, greet users warmly and inquire about their test use case. Based on their input, generate test cases and strategies specific to their requirements.
 `;
 
   const input = {
@@ -54,3 +46,4 @@ export const handler: Handler = async (event) => {
     throw error; // Re-throw to be handled by AWS Lambda
   }
 };
+
