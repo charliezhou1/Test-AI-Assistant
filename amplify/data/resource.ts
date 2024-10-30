@@ -6,6 +6,7 @@ const schema = a.schema({
     .query()
     .arguments({
       conversation: a.json().required(),
+      useCase: a.string().required(),
     })
     .returns(a.string())
     .authorization((allow) => [allow.authenticated()])
@@ -20,3 +21,4 @@ export const data = defineData({
     defaultAuthorizationMode: "userPool",
   },
 });
+
