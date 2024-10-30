@@ -24,7 +24,11 @@ export function Chat() {
     setInputValue(e.target.value);
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleUseCaseSelect = (useCase: string) => {
+    setSelectedUseCase(useCase);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
       const message = setNewUserMessage();
@@ -35,11 +39,10 @@ export function Chat() {
   const fetchChatResponse = async (message: Message, useCase: string) => {
     setInputValue("");
     setIsLoading(true);
-
     try {
       const { data, errors } = await amplifyClient.queries.chat({
         conversation: JSON.stringify([...conversation, message]),
-        useCase, 
+        useCase,
       });
 
       if (!errors && data) {
@@ -75,44 +78,35 @@ export function Chat() {
     <View className="chat-container">
       <UseCase
         selectedUseCase={selectedUseCase}
-        onSelect={setSelectedUseCase} // Update selected use case
+        onSelect={handleUseCaseSelect}
       />
-
       <View className="messages" ref={messagesRef}>
         {conversation.map((msg, index) => (
           <View key={index} className={`message ${msg.role}`}>
             {msg.content[0].text}
           </View>
         ))}
+        {isLoading && (
+          <View className="loader-container">
+            <p>Thinking...</p>
+            <Placeholder size="large" />
+          </View>
+        )}
       </View>
-
-      {isLoading && (
-        <View className="loader-container">
-          <p>Thinking...</p>
-          <Placeholder size="large" />
-        </View>
-      )}
-
       <form onSubmit={handleSubmit} className="input-container">
         <input
-          name="prompt"
+          type="text"
           value={inputValue}
           onChange={handleInputChange}
           placeholder="Type your message..."
+          name="prompt"
           className="input"
-          type="text"
         />
-        <Button
-          type="submit"
-          className="send-button"
-          isDisabled={isLoading}
-          loadingText="Sending..."
-        >
+        <Button type="submit" disabled={isLoading} className="send-button">
           Send
         </Button>
       </form>
-
-      {error ? <View className="error-message">{error}</View> : null}
+      {error && <View className="error-message">{error}</View>}
     </View>
   );
 }
