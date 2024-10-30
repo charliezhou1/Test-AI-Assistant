@@ -22,7 +22,7 @@ export const handler: Handler = async (event) => {
   const { conversation, useCase } = event.arguments;
 
   const SYSTEM_PROMPT = `
-  To create a ${useCase} experience, greet users warmly and inquire about their test use case. Based on their input, generate test cases and strategies specific to their requirements.
+  To create a ${useCase} experience, greet users warmly and inquire about their test requirements. Based on their input, generate test cases and strategies specific to their requirements.
 `;
 
   const input = {
