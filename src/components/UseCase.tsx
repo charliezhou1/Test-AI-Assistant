@@ -31,3 +31,4 @@ const UseCase: React.FC<UseCaseProps> = ({ selectedUseCase, onSelect }) => {
 };
 
 export default UseCase;
+
