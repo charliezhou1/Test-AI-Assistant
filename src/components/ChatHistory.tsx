@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View } from "@aws-amplify/ui-react";
 import { amplifyClient } from "@/app/amplify-utils";
+import { getCurrentUser } from "@aws-amplify/auth";
 
 type Nullable<T> = T | null;
 interface ChatHistoryEntry {
@@ -10,6 +11,7 @@ interface ChatHistoryEntry {
   question: string;
   response: string;
   username: string;
+  createdAt: string;
 }
 
 const ChatHistory: React.FC = () => {
@@ -17,29 +19,39 @@ const ChatHistory: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchChatHistory();
-  }, []);
+    const fetchHistory = async () => {
+      try {
+        const { username } = await getCurrentUser();
 
-  const fetchChatHistory = async () => {
-    try {
-      setIsLoading(true);
-      const { data, errors } = await amplifyClient.models.ChatHistory.list();
+        setIsLoading(true);
+        const { data, errors } = await amplifyClient.models.ChatHistory.list({
+          filter: {
+            username: {
+              eq: username,
+            },
+          },
+        });
 
-      if (!errors && data) {
-        setChatHistory(data);
-      } else {
-        throw new Error(errors?.[0]?.message || "Failed to fetch chat history");
+        if (!errors && data) {
+          const sortedData = [...data].sort(
+            (a, b) =>
+              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+          setChatHistory(sortedData);
+        } else {
+          throw new Error(
+            errors?.[0]?.message || "Failed to fetch chat history"
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching chat history:", error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching chat history:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    };
 
-  const formatTimestamp = (timestamp: string) => {
-    return new Date(timestamp).toLocaleString();
-  };
+    fetchHistory();
+  }, []);
 
   const getUseCaseDescription = (useCaseId: string) => {
     const useCaseMap: Record<string, string> = {
@@ -54,68 +66,40 @@ const ChatHistory: React.FC = () => {
   };
 
   return (
-    <View className="w-full p-4">
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold">Chat History</h2>
-        </div>
-        <div className="p-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            </div>
-          ) : chatHistory.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No chat history found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="px-4 py-2 text-left font-semibold">Time</th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Use Case
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Question
-                    </th>
-                    <th className="px-4 py-2 text-left font-semibold">
-                      Response
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {chatHistory.map((chat) => (
-                    <tr
-                      key={chat.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-4 py-2 whitespace-nowrap">
-                        {formatTimestamp(chat.timestamp)}
-                      </td>
-                      <td className="px-4 py-2">
-                        {getUseCaseDescription(chat.useCase)}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="max-w-xs overflow-hidden text-ellipsis">
-                          {chat.question}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="max-w-xs overflow-hidden text-ellipsis">
-                          {chat.response}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-gray-200">
+        <h2 className="text-lg font-semibold">Chat History</h2>
       </div>
-    </View>
+      <div className="flex-1 overflow-y-auto">
+        {isLoading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
+        ) : chatHistory.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            No chat history found
+          </div>
+        ) : (
+          <div className="space-y-2 p-2">
+            {chatHistory.map((chat) => (
+              <div
+                key={chat.id}
+                className="p-3 hover:bg-gray-100 rounded cursor-pointer"
+                onClick={() => console.log("Chat clicked:", chat)}
+              >
+                <div className="text-sm text-gray-500">
+                  {new Date(chat.timestamp).toLocaleString()}
+                </div>
+                <div className="font-medium truncate">{chat.question}</div>
+                <div className="text-sm text-gray-600 truncate">
+                  {getUseCaseDescription(chat.useCase)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
