@@ -15,7 +15,7 @@ export default function Home() {
         padding="1rem"
       >
         <Text fontWeight="bold">{user?.signInDetails?.loginId}</Text>
-        <Heading level={3}>Travel Personal Assistant</Heading>
+        <Heading level={3}>Testing Personal Assistant</Heading>
         <Button onClick={signOut} size="small" variation="destructive">
           Sign out
         </Button>

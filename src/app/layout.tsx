@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 
 export const metadata: Metadata = {
-  title: "Travel Personal Assistant",
+  title: "Testing Personal Assistant",
   description: "Meet Your Personal Travel AI Assistant",
 };
 
