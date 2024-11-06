@@ -9,8 +9,8 @@ This is an example shows how to build a Test AI assistant app. The app will prov
 
 ```
 
-git clone https://github.com/aws-samples/travel-personal-assistant.git
-cd travel-personal-assistant
+git clone [https://github.com/charliezhou1/Test-AI-Assistant.git
+cd Test-AI-Assistant
 
 ```
 
