@@ -10,6 +10,16 @@ export const backend = defineBackend({
   personalAssistantFunction,
 });
 
+// Add DynamoDB putItem permission to below function policy
+backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
+  new PolicyStatement({
+    effect: Effect.ALLOW,
+    actions: ["dynamodb:PutItem"],
+    resources: [
+      `arn:aws:dynamodb:*:*:table/*`,
+    ],
+  })
+);
 backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
@@ -17,5 +27,6 @@ backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
     resources: [
       `arn:aws:bedrock:*::foundation-model/${MODEL_ID}`,
     ],
+    
   })
 );

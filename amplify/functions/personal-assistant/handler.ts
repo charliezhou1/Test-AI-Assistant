@@ -3,11 +3,15 @@ import {
   ConverseCommandInput,
   ConverseCommand,
 } from "@aws-sdk/client-bedrock-runtime";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { Handler } from "aws-lambda";
 
 // Constants
 const AWS_REGION = process.env.AWS_REGION;
 const MODEL_ID = process.env.MODEL_ID;
+//const TABLE_NAME = process.env.TABLE_NAME;
+const TABLE_NAME = "ChatHistory-h6tvkikd7vhxvotz7x3s4xcit4-NONE";
 
 // Configuration
 const INFERENCE_CONFIG = {
@@ -17,6 +21,10 @@ const INFERENCE_CONFIG = {
 
 // Initialize Bedrock Runtime Client
 const client = new BedrockRuntimeClient({ region: AWS_REGION });
+
+// Initialize the DynamoDB client
+const dbClient = new DynamoDBClient({ region: AWS_REGION });
+const docClient = DynamoDBDocumentClient.from(dbClient);
 
 export const handler: Handler = async (event) => {
   const { conversation, useCase } = event.arguments;
@@ -33,12 +41,32 @@ export const handler: Handler = async (event) => {
   } as ConverseCommandInput;
 
   try {
+    // Invoke Bedrock
     const command = new ConverseCommand(input);
     const response = await client.send(command);
 
     if (!response.output?.message) {
       throw new Error("No message in the response output");
     }
+
+    // Save to DynamoDB
+    const item = {
+      id: new Date().getTime().toString(),
+      timestamp: new Date().toISOString(),
+      useCase: useCase,
+      question: conversation[conversation.length - 1].content[0].text,
+      response: JSON.stringify(response.output.message.content),
+      //response: JSON.stringify(response.output.message),
+      username: event.identity.username,
+      createdAt: new Date().getTime().toString(),
+    };
+    
+    const putCommand = new PutCommand({
+      TableName: TABLE_NAME,
+      Item: item,
+    });
+  
+    await docClient.send(putCommand);
 
     return JSON.stringify(response.output.message);
   } catch (error) {
