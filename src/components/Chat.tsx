@@ -98,9 +98,15 @@ export function Chat() {
   };
 
   return (
-    <div className="flex h-screen">
+    <View
+      className="flex"
+      style={{
+        height: "calc(100vh - 120px)", // Much larger subtraction
+        overflow: "hidden",
+      }}
+    >
       {/* Left sidebar */}
-      <div
+      <View
         className={`${
           showHistory ? "w-64" : "w-16"
         } border-r border-gray-200 flex flex-col`}
@@ -112,88 +118,61 @@ export function Chat() {
           {showHistory ? "← Hide" : "→ Show"}
         </Button>
         {showHistory && <ChatHistory />}
-      </div>
+      </View>
 
-      {/* Main chat area */}
-      <View className="flex-1 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
+      {/* Main chat area with fixed heights */}
+      <View
+        className="flex-1 grid grid-rows-[auto_1fr_auto]"
+        style={{ maxHeight: "calc(100vh - 120px)" }}
+      >
+        {/* Top UseCase section */}
+        <View className="p-2 border-b border-gray-200">
           <UseCase
             selectedUseCase={selectedUseCase}
             onSelect={handleUseCaseSelect}
           />
-        </div>
+        </View>
 
-        <View className="flex-1 overflow-auto p-4" ref={messagesRef}>
+        {/* Messages section */}
+        <View className="overflow-y-auto px-4 py-2" ref={messagesRef}>
           {conversation.map((msg, index) => (
-            <View key={index} className={`message ${msg.role}`}>
+            <View key={index} className={`message ${msg.role} mb-4`}>
               {msg.content[0].text}
             </View>
           ))}
           {isLoading && (
-            <View className="loader-container">
+            <View className="loader-container mb-4">
               <p>Thinking...</p>
               <Placeholder size="large" />
             </View>
           )}
         </View>
 
-        <div className="p-4 border-t border-gray-200">
-          <form onSubmit={handleSubmit} className="input-container">
+        {/* Bottom input section */}
+        <View className="border-t border-gray-200">
+          <form onSubmit={handleSubmit} className="flex gap-2 p-2">
             <input
               type="text"
               value={inputValue}
               onChange={handleInputChange}
               placeholder="Type your message..."
               name="prompt"
-              className="input"
+              className="flex-1 px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-            <Button type="submit" disabled={isLoading} className="send-button">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="px-4 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+            >
               Send
             </Button>
           </form>
-          {error && <View className="error-message">{error}</View>}
-        </div>
+          {error && (
+            <View className="text-red-500 text-sm px-2 pb-2">{error}</View>
+          )}
+        </View>
       </View>
-    </div>
-    //   <View className="chat-container">
-    //     <UseCase
-    //       selectedUseCase={selectedUseCase}
-    //       onSelect={handleUseCaseSelect}
-    //     />
-    //     <Button
-    //       onClick={toggleHistory}
-    //       className="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded"
-    //     >
-    //       View History
-    //     </Button>
-    //     <View className="messages" ref={messagesRef}>
-    //       {conversation.map((msg, index) => (
-    //         <View key={index} className={`message ${msg.role}`}>
-    //           {msg.content[0].text}
-    //         </View>
-    //       ))}
-    //       {isLoading && (
-    //         <View className="loader-container">
-    //           <p>Thinking...</p>
-    //           <Placeholder size="large" />
-    //         </View>
-    //       )}
-    //     </View>
-    //     <form onSubmit={handleSubmit} className="input-container">
-    //       <input
-    //         type="text"
-    //         value={inputValue}
-    //         onChange={handleInputChange}
-    //         placeholder="Type your message..."
-    //         name="prompt"
-    //         className="input"
-    //       />
-    //       <Button type="submit" disabled={isLoading} className="send-button">
-    //         Send
-    //       </Button>
-    //     </form>
-    //     {error && <View className="error-message">{error}</View>}
-    //   </View>
+    </View>
   );
 }
 
