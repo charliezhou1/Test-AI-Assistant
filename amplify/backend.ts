@@ -11,15 +11,15 @@ export const backend = defineBackend({
 });
 
 // Add DynamoDB putItem permission to below function policy
-backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
-  new PolicyStatement({
-    effect: Effect.ALLOW,
-    actions: ["dynamodb:PutItem"],
-    resources: [
-      `arn:aws:dynamodb:*:*:table/*`,
-    ],
-  })
-);
+// backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
+//   new PolicyStatement({
+//     effect: Effect.ALLOW,
+//     actions: ["dynamodb:PutItem"],
+//     resources: [
+//       `arn:aws:dynamodb:*:*:table/*`,
+//     ],
+//   })
+// );
 backend.personalAssistantFunction.resources.lambda.addToRolePolicy(
   new PolicyStatement({
     effect: Effect.ALLOW,
