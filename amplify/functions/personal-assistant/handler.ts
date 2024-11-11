@@ -56,9 +56,11 @@ export const handler: Handler = async (event) => {
       useCase: useCase,
       question: conversation[conversation.length - 1].content[0].text,
       response: JSON.stringify(response.output.message.content),
-      //response: JSON.stringify(response.output.message),
       username: event.identity.username,
-      createdAt: new Date().getTime().toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      __typename: "ChatHistory",
+      owner: event.identity.username+"::"+event.identity.username,
     };
     
     const putCommand = new PutCommand({
