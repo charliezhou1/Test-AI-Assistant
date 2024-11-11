@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { View } from "@aws-amplify/ui-react";
-import { amplifyClient } from "@/app/amplify-utils";
 import { getCurrentUser } from "@aws-amplify/auth";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocument, QueryCommand } from "@aws-sdk/lib-dynamodb";
 
 type Nullable<T> = T | null;
+
 interface ChatHistoryEntry {
   id: Nullable<string>;
   timestamp: string;
@@ -14,44 +15,59 @@ interface ChatHistoryEntry {
   createdAt: string;
 }
 
+// Use the same table name as in your handler
+const TABLE_NAME =
+  process.env.TABLE_NAME || "ChatHistory-ggi5w66zvjculhv43hpubsfv2m-NONE";
+
+// Initialize DynamoDB client
+const ddbClient = new DynamoDBClient({
+  region: process.env.AWS_REGION || "us-west-2",
+});
+const ddbDocClient = DynamoDBDocument.from(ddbClient);
+
 const ChatHistory: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const { username } = await getCurrentUser();
-
-        setIsLoading(true);
-        const { data, errors } = await amplifyClient.models.ChatHistory.list({
-          filter: {
-            username: {
-              eq: username,
-            },
-          },
-        });
-
-        if (!errors && data) {
-          const sortedData = [...data].sort(
-            (a, b) =>
-              new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          );
-          setChatHistory(sortedData);
-        } else {
-          throw new Error(
-            errors?.[0]?.message || "Failed to fetch chat history"
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching chat history:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchHistory();
   }, []);
+
+  const fetchHistory = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { username } = await getCurrentUser();
+
+      const params = {
+        TableName: TABLE_NAME,
+        KeyConditionExpression: "username = :username",
+        ExpressionAttributeValues: {
+          ":username": username,
+        },
+      };
+
+      const response = await ddbDocClient.send(new QueryCommand(params));
+
+      if (response.Items) {
+        const sortedData = [...response.Items] as ChatHistoryEntry[];
+        sortedData.sort(
+          (a, b) =>
+            new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+        );
+        setChatHistory(sortedData);
+      }
+    } catch (error) {
+      console.error("Error fetching chat history:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch chat history"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getUseCaseDescription = (useCaseId: string) => {
     const useCaseMap: Record<string, string> = {
@@ -65,16 +81,28 @@ const ChatHistory: React.FC = () => {
     return useCaseMap[useCaseId] || useCaseId;
   };
 
+  const handleRefresh = () => {
+    fetchHistory();
+  };
+
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
         <h2 className="text-lg font-semibold">Chat History</h2>
+        <button
+          onClick={handleRefresh}
+          className="text-sm text-blue-600 hover:text-blue-800"
+        >
+          Refresh
+        </button>
       </div>
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
           <div className="flex justify-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
+        ) : error ? (
+          <div className="text-center py-8 text-red-500">Error: {error}</div>
         ) : chatHistory.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No chat history found
