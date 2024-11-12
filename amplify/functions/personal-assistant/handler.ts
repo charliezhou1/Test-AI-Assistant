@@ -10,12 +10,31 @@ import type { Handler } from "aws-lambda";
 // Constants
 const AWS_REGION = process.env.AWS_REGION;
 const MODEL_ID = process.env.MODEL_ID;
-const TABLE_NAME = "ChatHistory-ggi5w66zvjculhv43hpubsfv2m-NONE"
+const TABLE_NAME = "ChatHistory-ggi5w66zvjculhv43hpubsfv2m-NONE";
 
 // Configuration
 const INFERENCE_CONFIG = {
   maxTokens: 1000,
   temperature: 0.5,
+};
+
+const USE_CASE_PROMPTS = {
+  "use-case-1": {
+    title: "user story Testing Assistant",
+    prompt: `Generate user story, derive test specifications and automate them`,
+  },
+  "use-case-2": {
+    title: "API Testing Assistant",
+    prompt: `Generate API test cases and automate them`,
+  },
+  "use-case-3": {
+    title: "Testing Strategy Assistant",
+    prompt: `Generate test strategy and plan`,
+  },
+  "use-case-4": {
+    title: "Functional Testing Assistant",
+    prompt: `Generate functional test cases and analyze Jira user stories`,
+  },
 };
 
 // Initialize Bedrock Runtime Client
@@ -27,9 +46,14 @@ const docClient = DynamoDBDocumentClient.from(dbClient);
 
 export const handler: Handler = async (event) => {
   const { conversation, useCase } = event.arguments;
+  const useCaseConfig =
+    USE_CASE_PROMPTS[useCase as keyof typeof USE_CASE_PROMPTS];
+  if (!useCaseConfig) {
+    throw new Error(`Invalid use case: ${useCase}`);
+  }
 
   const SYSTEM_PROMPT = `
-  To create a ${useCase} experience, greet users warmly and inquire about their test requirements. Based on their input, generate test cases and strategies specific to their requirements.
+  To ${useCaseConfig.prompt}, greet users warmly and inquire about their test requirements. Based on their input, generate test cases and strategies specific to their requirements.
 `;
 
   const input = {

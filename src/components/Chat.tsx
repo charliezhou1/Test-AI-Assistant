@@ -89,6 +89,8 @@ export function Chat() {
     setShowHistory(!showHistory);
   };
 
+
+
   const fetchChatResponse = async (message: Message, useCase: string) => {
     setInputValue("");
     setIsLoading(true);
