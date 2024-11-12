@@ -13,6 +13,16 @@ type Message = {
 
 type Conversation = Message[];
 
+interface ChatHistoryEntry {
+  id: string | null;
+  timestamp: string;
+  useCase: string;
+  question: string;
+  response: string;
+  username: string;
+  createdAt: string;
+}
+
 export function Chat() {
   const [conversation, setConversation] = useState<Conversation>([]);
   const [inputValue, setInputValue] = useState("");
@@ -44,6 +54,27 @@ export function Chat() {
 
   const handleUseCaseSelect = (useCase: string) => {
     setSelectedUseCase(useCase);
+  };
+
+  const handleChatHistorySelect = (chat: ChatHistoryEntry) => {
+    setConversation([]);
+
+    setSelectedUseCase(chat.useCase);
+
+    const historicalConversation: Conversation = [
+      {
+        role: "user",
+        content: [{ text: chat.question }],
+      },
+      {
+        role: "assistant",
+        content: [{ text: chat.response }],
+      },
+    ];
+
+    setConversation(historicalConversation);
+
+    setShowHistory(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -96,20 +127,38 @@ export function Chat() {
     setInputValue("");
     return newUserMessage;
   };
+  const formatMessage = (message: Message) => {
+    // If the message is in array format, parse it and extract the text
+    if (
+      typeof message.content[0].text === "string" &&
+      message.content[0].text.startsWith("[")
+    ) {
+      try {
+        const parsed = JSON.parse(message.content[0].text);
+        if (Array.isArray(parsed) && parsed[0]?.text) {
+          return parsed[0].text;
+        }
+      } catch (e) {
+        // If parsing fails, return the original text
+        return message.content[0].text;
+      }
+    }
+    return message.content[0].text;
+  };
 
   return (
     <View
       className="flex"
       style={{
-        height: "calc(100vh - 120px)", // Much larger subtraction
+        height: "calc(100vh - 120px)",
         overflow: "hidden",
       }}
     >
       {/* Left sidebar */}
       <View
         className={`${
-          showHistory ? "w-64" : "w-16"
-        } border-r border-gray-200 flex flex-col`}
+          showHistory ? "w-80" : "w-16"
+        } border-r border-gray-200 flex flex-col transition-all duration-300`}
       >
         <Button
           onClick={toggleHistory}
@@ -117,27 +166,42 @@ export function Chat() {
         >
           {showHistory ? "← Hide" : "→ Show"}
         </Button>
-        {showHistory && <ChatHistory />}
+        {showHistory && <ChatHistory onSelectChat={handleChatHistorySelect} />}
       </View>
 
-      {/* Main chat area with fixed heights */}
+      {/* Main chat area */}
       <View
         className="flex-1 grid grid-rows-[auto_1fr_auto]"
         style={{ maxHeight: "calc(100vh - 120px)" }}
       >
-        {/* Top UseCase section */}
         <View className="p-2 border-b border-gray-200">
-          <UseCase
-            selectedUseCase={selectedUseCase}
-            onSelect={handleUseCaseSelect}
-          />
+          
+            <UseCase
+              selectedUseCase={selectedUseCase}
+              onSelect={handleUseCaseSelect}
+            />
+            
         </View>
 
-        {/* Messages section */}
         <View className="overflow-y-auto px-4 py-2" ref={messagesRef}>
           {conversation.map((msg, index) => (
-            <View key={index} className={`message ${msg.role} mb-4`}>
-              {msg.content[0].text}
+            <View
+              key={index}
+              className={`message ${msg.role} mb-4 p-3 rounded ${
+                msg.role === "assistant" ? "bg-blue-50" : "bg-gray-50"
+              }`}
+            >
+              <div
+                className={`whitespace-pre-wrap prose prose-sm max-w-none ${
+                  msg.role === "assistant" ? "text-gray" : "text-white"
+                }`}
+                style={{
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {formatMessage(msg)}
+              </div>
             </View>
           ))}
           {isLoading && (
@@ -148,7 +212,6 @@ export function Chat() {
           )}
         </View>
 
-        {/* Bottom input section */}
         <View className="border-t border-gray-200">
           <form onSubmit={handleSubmit} className="flex gap-2 p-2">
             <input

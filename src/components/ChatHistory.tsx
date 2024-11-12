@@ -14,7 +14,12 @@ interface ChatHistoryEntry {
   createdAt: string;
 }
 
-const ChatHistory: React.FC = () => {
+interface ChatHistoryProps {
+  onSelectChat: (chat: ChatHistoryEntry) => void;
+}
+
+const ChatHistory: React.FC<ChatHistoryProps> = ({ onSelectChat }) => {
+  //const ChatHistory: React.FC = () => {
   const [chatHistory, setChatHistory] = useState<ChatHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -64,7 +69,6 @@ const ChatHistory: React.FC = () => {
     };
     return useCaseMap[useCaseId] || useCaseId;
   };
-
   return (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-gray-200">
@@ -84,13 +88,13 @@ const ChatHistory: React.FC = () => {
             {chatHistory.map((chat) => (
               <div
                 key={chat.id}
-                className="p-3 hover:bg-gray-100 rounded cursor-pointer"
-                onClick={() => console.log("Chat clicked:", chat)}
+                className="p-3 bg-white hover:bg-gray-50 rounded-lg shadow-sm border border-gray-200 cursor-pointer transition-colors duration-200"
+                onClick={() => onSelectChat(chat)}
               >
                 <div className="text-sm text-gray-500">
                   {new Date(chat.timestamp).toLocaleString()}
                 </div>
-                <div className="font-medium truncate">{chat.question}</div>
+                <div className="font-medium line-clamp-2">{chat.question}</div>
                 <div className="text-sm text-gray-600 truncate">
                   {getUseCaseDescription(chat.useCase)}
                 </div>

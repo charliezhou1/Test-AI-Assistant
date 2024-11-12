@@ -10,8 +10,7 @@ import type { Handler } from "aws-lambda";
 // Constants
 const AWS_REGION = process.env.AWS_REGION;
 const MODEL_ID = process.env.MODEL_ID;
-//const TABLE_NAME = process.env.TABLE_NAME;
-const TABLE_NAME = "ChatHistory-h6tvkikd7vhxvotz7x3s4xcit4-NONE";
+const TABLE_NAME = "ChatHistory-ggi5w66zvjculhv43hpubsfv2m-NONE"
 
 // Configuration
 const INFERENCE_CONFIG = {
@@ -60,14 +59,14 @@ export const handler: Handler = async (event) => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       __typename: "ChatHistory",
-      owner: event.identity.username+"::"+event.identity.username,
+      owner: event.identity.username + "::" + event.identity.username,
     };
-    
+
     const putCommand = new PutCommand({
       TableName: TABLE_NAME,
       Item: item,
     });
-  
+
     await docClient.send(putCommand);
 
     return JSON.stringify(response.output.message);
@@ -76,4 +75,3 @@ export const handler: Handler = async (event) => {
     throw error; // Re-throw to be handled by AWS Lambda
   }
 };
-

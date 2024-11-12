@@ -16,7 +16,7 @@ export default function Home() {
         alignItems="center"
         padding="1rem"
       >
-        <Image src={logo} alt="Logo" width={200} height={32} />
+        <Image src={logo} alt="Logo" width={100} height={32} />
 
         <Heading level={3}>Testing Personal Assistant</Heading>
         <Flex alignItems="center" gap="1rem">
